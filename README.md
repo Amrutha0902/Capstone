@@ -169,6 +169,9 @@ Key libraries used in this project:
 
 See `requirements.txt` for the complete dependency list.
 
+## Challenges till the point
+
+The most intricate challenge addressed in this project was developing a robust Explainable AI system using Grad-CAM (Gradient-weighted Class Activation Mapping) that generates interpretable visualizations for multi-class medical image classification. Unlike typical binary classification tasks, this system needed to simultaneously compute and visualize activation patterns for all four Alzheimer's disease stages while handling Keras model compatibility issues across different versions. The implementation required solving complex gradient computation problems where the neural network's intermediate convolutional layer outputs had to be captured and weighted appropriately to highlight brain regions most influential for each diagnostic category. Additionally, the system incorporates both saliency maps and class-specific color-coded heatmaps in a 2x2 grid format, enabling clinicians and patients to understand not just what the model predicted, but precisely which brain structures—such as the hippocampus, ventricles, and cortical regions—drove that decision. This transparency is crucial in medical AI applications where trust and interpretability directly impact clinical adoption and patient care outcomes.
 ## 🙏 Acknowledgments
 
 This project was developed as a capstone project focusing on applying deep learning techniques to medical image analysis for Alzheimer's disease diagnosis support.
