@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alzheimer's Disease Image Classification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #764ba2;
+            background: #f0f0f0;
+        }
+
+        .upload-section.dragover {
+            border-color: #764ba2;
+            background: #e8e8e8;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: transform 0.2s;
+        }
+
+        .file-label:hover {
+            transform: scale(1.05);
+        }
+
+        .upload-btn {
+            margin-top: 20px;
+            padding: 15px 40px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-btn:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .upload-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .prediction-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .prediction-badge {
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .confidence-bar {
+            flex: 1;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .probabilities {
+            margin-top: 15px;
+        }
+
+        .prob-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .prob-item:last-child {
+            border-bottom: none;
+        }
+
+        .image-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .image-box {
+            text-align: center;
+        }
+
+        .image-box img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .image-box h4 {
+            margin-top: 10px;
+            color: #667eea;
+        }
+
+        .explanation-box {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            margin-top: 20px;
+            line-height: 1.8;
+            max-height: 800px;
+            overflow-y: auto;
+            font-size: 1.05em;
+        }
+        
+        .explanation-box h2 {
+            color: #667eea;
+            font-size: 1.3em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        
+        .explanation-box h2:first-child {
+            margin-top: 0;
+        }
+        
+        .explanation-box h3 {
+            color: #764ba2;
+            font-size: 1.1em;
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+        
+        .explanation-box strong {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .explanation-box ul, .explanation-box ol {
+            margin-left: 20px;
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .explanation-box li {
+            margin-bottom: 5px;
+        }
+        
+        .explanation-box hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        
+        .explanation-box p {
+            margin-bottom: 12px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .image-container {
+                grid-template-columns: 1fr;
+            }
+
+            .prediction-info {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Alzheimer's Disease Classification</h1>
+            <p>MRI Scan Analysis with Explainable AI</p>
+        </div>
+
+        <div class="content">
+            <div class="upload-section" id="uploadSection">
+                <h2>Upload MRI Brain Scan Image</h2>
+                <p style="margin: 20px 0; color: #666;">
+                    Please upload a brain MRI scan image (PNG, JPG, JPEG)
+                </p>
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" accept="image/*" />
+                    <label for="fileInput" class="file-label">Choose File</label>
+                </div>
+                <div id="fileName" style="margin-top: 15px; color: #666;"></div>
+                <button class="upload-btn" id="uploadBtn" disabled>Analyze Image</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 15px; color: #667eea;">Processing image and generating analysis...</p>
+            </div>
+
+            <div class="error" id="error" style="display: none;"></div>
+
+            <div class="results" id="results">
+                <div class="result-card">
+                    <h3>📊 Prediction Results</h3>
+                    <div class="prediction-info">
+                        <div class="prediction-badge" id="predictionClass">-</div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" id="confidenceFill" style="width: 0%;">
+                                <span id="confidenceText">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="probabilities" id="probabilities"></div>
+                </div>
+
+                <div class="result-card">
+                    <h3>🖼️ Visualizations</h3>
+                    
+                    <!-- Grid View (Primary - Most Visible) -->
+                    <div class="image-box" style="margin-bottom: 20px;">
+                        <img id="heatmapImage" src="" alt="Grid Visualization" style="width: 100%; max-width: 800px;" />
+                        <h4>Class-Specific Activation Maps (2x2 Grid)</h4>
+                        <p style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                            Shows which brain regions are important for each class separately
+                        </p>
+                    </div>
+                    
+                    <!-- Original Image -->
+                    <div class="image-container" id="imageContainer">
+                        <div class="image-box">
+                            <img id="originalImage" src="" alt="Original Image" />
+                            <h4>Original Image</h4>
+                        </div>
+                        <div class="image-box" id="saliencyBox" style="display: none;">
+                            <img id="saliencyImage" src="" alt="Saliency Map" />
+                            <h4>Saliency Map</h4>
+                            <p style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                                Pixel-level importance visualization
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <h3>💡 AI Explanation</h3>
+                    <div class="explanation-box" id="explanation">
+                        Loading explanation...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileName = document.getElementById('fileName');
+        const uploadSection = document.getElementById('uploadSection');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const error = document.getElementById('error');
+
+        // File input change
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.textContent = `Selected: ${file.name}`;
+                uploadBtn.disabled = false;
+            } else {
+                fileName.textContent = '';
+                uploadBtn.disabled = true;
+            }
+        });
+
+        // Drag and drop
+        uploadSection.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+
+        uploadSection.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+        });
+
+        uploadSection.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                fileInput.files = e.dataTransfer.files;
+                fileName.textContent = `Selected: ${file.name}`;
+                uploadBtn.disabled = false;
+            } else {
+                showError('Please drop a valid image file');
+            }
+        });
+
+        // Upload button click
+        uploadBtn.addEventListener('click', function() {
+            const file = fileInput.files[0];
+            if (!file) {
+                showError('Please select a file first');
+                return;
+            }
+
+            uploadFile(file);
+        });
+
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Show loading, hide results and error
+            loading.classList.add('show');
+            results.classList.remove('show');
+            error.style.display = 'none';
+            uploadBtn.disabled = true;
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.classList.remove('show');
+                uploadBtn.disabled = false;
+
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    displayResults(data);
+                }
+            })
+            .catch(err => {
+                loading.classList.remove('show');
+                uploadBtn.disabled = false;
+                showError('An error occurred: ' + err.message);
+            });
+        }
+
+        function displayResults(data) {
+            // Prediction
+            document.getElementById('predictionClass').textContent = data.prediction.class;
+            const confidence = data.prediction.confidence;
+            document.getElementById('confidenceFill').style.width = confidence + '%';
+            document.getElementById('confidenceText').textContent = confidence + '%';
+
+            // Probabilities
+            const probContainer = document.getElementById('probabilities');
+            probContainer.innerHTML = '<strong>All Class Probabilities:</strong>';
+            for (const [cls, prob] of Object.entries(data.prediction.all_probabilities)) {
+                const probItem = document.createElement('div');
+                probItem.className = 'prob-item';
+                probItem.innerHTML = `
+                    <span>${cls}</span>
+                    <span><strong>${prob}%</strong></span>
+                `;
+                probContainer.appendChild(probItem);
+            }
+
+            // Images
+            document.getElementById('originalImage').src = data.original_image;
+            
+            // Grid visualization (primary - shows all 4 classes in 2x2 grid)
+            const heatmapImg = document.getElementById('heatmapImage');
+            if (data.heatmap) {
+                const timestamp = new Date().getTime();
+                heatmapImg.src = data.heatmap + '?t=' + timestamp;
+                heatmapImg.alt = 'Grid Visualization - Class-Specific Activation Maps';
+                heatmapImg.onerror = function() {
+                    console.error('Failed to load grid visualization:', data.heatmap);
+                    this.src = data.original_image;
+                    this.alt = 'Visualization not available';
+                };
+                heatmapImg.onload = function() {
+                    console.log('Grid visualization loaded successfully');
+                };
+            } else {
+                heatmapImg.src = data.original_image;
+                heatmapImg.alt = 'Visualization not available';
+                console.warn('No grid visualization received from server');
+            }
+            
+            // Saliency map (alternative visualization)
+            const saliencyBox = document.getElementById('saliencyBox');
+            if (data.heatmap_saliency) {
+                const saliencyImg = document.getElementById('saliencyImage');
+                const timestamp = new Date().getTime();
+                saliencyImg.src = data.heatmap_saliency + '?t=' + timestamp;
+                saliencyBox.style.display = 'block';
+                saliencyImg.onload = function() {
+                    console.log('Saliency map loaded successfully');
+                };
+            } else {
+                saliencyBox.style.display = 'none';
+            }
+
+            // Explanation (supports markdown-like formatting)
+            const explanationEl = document.getElementById('explanation');
+            let explanationText = data.explanation || '';
+            
+            // Convert markdown to HTML - process line by line for better control
+            const lines = explanationText.split('\n');
+            let html = '';
+            let inList = false;
+            let inParagraph = false;
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                
+                // Skip empty lines
+                if (line === '') {
+                    if (inParagraph) {
+                        html += '</p>\n';
+                        inParagraph = false;
+                    }
+                    if (inList) {
+                        html += '</ul>\n';
+                        inList = false;
+                    }
+                    continue;
+                }
+                
+                // Headers
+                if (line.startsWith('## ')) {
+                    if (inParagraph) html += '</p>\n';
+                    if (inList) { html += '</ul>\n'; inList = false; }
+                    html += '<h2>' + line.substring(3) + '</h2>\n';
+                    inParagraph = false;
+                    continue;
+                }
+                if (line.startsWith('### ')) {
+                    if (inParagraph) html += '</p>\n';
+                    if (inList) { html += '</ul>\n'; inList = false; }
+                    html += '<h3>' + line.substring(4) + '</h3>\n';
+                    inParagraph = false;
+                    continue;
+                }
+                
+                // Horizontal rule
+                if (line === '---' || line === '***') {
+                    if (inParagraph) html += '</p>\n';
+                    if (inList) { html += '</ul>\n'; inList = false; }
+                    html += '<hr>\n';
+                    inParagraph = false;
+                    continue;
+                }
+                
+                // List items
+                if (line.startsWith('- ') || line.startsWith('* ') || /^\d+\.\s/.test(line)) {
+                    if (inParagraph) { html += '</p>\n'; inParagraph = false; }
+                    if (!inList) {
+                        html += '<ul>\n';
+                        inList = true;
+                    }
+                    let listContent = line.replace(/^[-*]\s+/, '').replace(/^\d+\.\s+/, '');
+                    // Process bold in list items
+                    listContent = listContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    html += '<li>' + listContent + '</li>\n';
+                    continue;
+                }
+                
+                // Regular paragraph
+                if (!inList && !inParagraph) {
+                    html += '<p>';
+                    inParagraph = true;
+                } else if (inList) {
+                    html += '</ul>\n';
+                    inList = false;
+                    html += '<p>';
+                    inParagraph = true;
+                }
+                
+                // Process bold text
+                line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html += line + ' ';
+            }
+            
+            // Close any open tags
+            if (inParagraph) html += '</p>\n';
+            if (inList) html += '</ul>\n';
+            
+            // If no HTML was generated, wrap the whole text
+            if (html.trim() === '') {
+                html = '<p>' + explanationText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') + '</p>';
+            }
+            
+            explanationEl.innerHTML = html;
+
+            // Show results
+            results.classList.add('show');
+            results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.style.display = 'block';
+            error.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Model files (large)
+models/*.h5
+models/*.hdf5
+models/*.pb
+*.ckpt
+*.pth
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Flask
+instance/
+.webassets-cache
+
+# Uploads and outputs
+static/uploads/*
+static/output/*
+!static/uploads/.gitkeep
+!static/output/.gitkeep
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Data (uncomment if you don't want to track dataset)
+# OriginalDataset/
+
+# Temporary files
+*.tmp
+*.temp
+
